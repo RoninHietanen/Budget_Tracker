@@ -3,7 +3,7 @@
 
 ## Link
 
-[Link to the Budget Tracker](https://enigmatic-stream-44759.herokuapp.com/)
+[Link to the Budget Tracker](https://radiant-thicket-51045.herokuapp.com/)
 
 ## Description
 ```md
