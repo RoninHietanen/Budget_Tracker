@@ -14,7 +14,7 @@ fetch("/api/transaction")
   .then(response => {
     return response.json();
   })
-  .then(data => {
+  .then((data) => {
     // save db data on global variable
     transactions = data;
 
@@ -22,7 +22,7 @@ fetch("/api/transaction")
     populateTable();
     populateChart();
   })
-  .catch(err => {
+  .catch((err) => {
     console.log(err);
   });
 
@@ -136,7 +136,7 @@ function sendTransaction(isAdding) {
   .then(response => {    
     return response.json();
   })
-  .then(data => {
+  .then((data) => {
     if (data.errors) {
       errorEl.textContent = "Missing Information";
     }
@@ -146,7 +146,7 @@ function sendTransaction(isAdding) {
       amountEl.value = "";
     }
   })
-  .catch(err => {
+  .catch((err) => {
     // fetch failed, so save in indexed db
     saveRecord(transaction);
     console.log(err);
