@@ -1,6 +1,5 @@
-const APP_PREFIX = 'budgettracker-';     
-const VERSION = 'version_01';
-const CACHE_NAME = APP_PREFIX + VERSION;
+const STATIC_CACHE = "budget-tracker-v1";
+const RUNTIME_CACHE = "runtime-cache";
 
 const FILES_TO_CACHE = [
   '/',
@@ -13,44 +12,72 @@ const FILES_TO_CACHE = [
   '/icons/icon-192x192.png', 
 ];
 
-self.addEventListener('install', function (e) {
+self.addEventListener("install", e => {
   e.waitUntil(
-    caches.open(CACHE_NAME).then(function (cache) {
-      console.log('installing cache : ' + CACHE_NAME)
-      return cache.addAll(FILES_TO_CACHE)
-    })
-  )
+    caches
+      .open(STATIC_CACHE)
+      .then(cache => cache.addAll(FILES_TO_CACHE))
+      .then(() => self.skipWaiting())
+  );
 });
 
-self.addEventListener('activate', function (e) {
-  e.waitUntil(
-    caches.keys().then(function (keyList) {
-      let cacheKeeplist = keyList.filter(function (key) {
-        return key.indexOf(APP_PREFIX);
-      });
-        cacheKeeplist.push(CACHE_NAME);
-        return Promise.all(keyList.map(function (key, i) {
-          if (cacheKeeplist.indexOf(key) === -1) {
-            console.log('deleting cache : ' + keyList[i] );
-            return caches.delete(keyList[i]);
-          }
-        })
-      );
-    })
-  )
+self.addEventListener("activate", event => {
+  const currentCaches = [STATIC_CACHE, RUNTIME_CACHE];
+  event.waitUntil(
+    caches
+      .keys()
+      .then(cacheNames => {
+        return cacheNames.filter(
+          cacheName => !currentCaches.includes(cacheName)
+        );
+      })
+      .then(cachesToDelete => {
+        return Promise.all(
+          cachesToDelete.map(cacheToDelete => {
+            return caches.delete(cacheToDelete);
+          })
+        );
+      })
+      .then(() => self.clients.claim())
+  );
 });
 
-self.addEventListener('fetch', function (e) {
-  console.log('fetch request : ' + e.request.url)
-  e.respondWith(
-    caches.match(e.request).then(function (request) {
-      if (request) {
-        console.log('responding with cache : ' + e.request.url)
-        return request
-      } else {       
-        console.log('file is not cached, fetching : ' + e.request.url)
-        return fetch(e.request)
+self.addEventListener("fetch", event => {
+  if (
+    event.request.method !== "GET" ||
+    !event.request.url.startsWith(self.location.origin)
+  ) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
+  if (event.request.url.includes("/api/images")) {
+    event.respondWith(
+      caches.open(RUNTIME_CACHE).then(cache => {
+        return fetch(event.request)
+          .then(response => {
+            cache.put(event.request, response.clone());
+            return response;
+          })
+          .catch(() => caches.match(event.request));
+      })
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then(cachedResponse => {
+      if (cachedResponse) {
+        return cachedResponse;
       }
+
+      return caches.open(RUNTIME_CACHE).then(cache => {
+        return fetch(event.request).then(response => {
+          return cache.put(event.request, response.clone()).then(() => {
+            return response;
+          });
+        });
+      });
     })
-  )
+  );
 });
