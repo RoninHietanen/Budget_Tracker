@@ -21,7 +21,8 @@ fetch("/api/transaction")
     populateTotal();
     populateTable();
     populateChart();
-  });
+  })
+  .catch(err => reject(err));
 
 function populateTotal() {
   // reduce transaction amounts to a single total value
