@@ -8,7 +8,7 @@ const FILES_TO_CACHE = [
   '/indexedDB.js',
   '/manifest.json',
   '/styles.css',
-  '/icons/icon-152x152.png',
+  '/icons/icon-512x512.png',
   '/icons/icon-192x192.png', 
 ];
 
